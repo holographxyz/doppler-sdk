@@ -15,7 +15,7 @@ const { mainnet, baseSepolia } = configs;
 export default createConfig({
   database: {
     kind: "postgres",
-    connectionString: "postgresql://postgres:postgres@localhost:5432/default",
+    connectionString: "postgresql://postgres:postgres@localhost:5440/default",
     poolConfig: {
       max: 100,
     },
