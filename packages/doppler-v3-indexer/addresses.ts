@@ -7,9 +7,9 @@ export const CHAIN_IDS = {
   baseSepolia: 84532,
 } as const;
 
-const mainnetStartBlock = 22417579;
+const mainnetStartBlock = 22516004;
 
-const baseSepoliaStartBlock = 25343227;
+const baseSepoliaStartBlock = 25938595;
 
 export type IndexerConfigs = Record<Network, DopplerConfig>;
 
