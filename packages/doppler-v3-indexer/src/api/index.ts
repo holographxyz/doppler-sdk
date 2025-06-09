@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import {
   and,
   client,
@@ -13,12 +14,23 @@ import {
 } from "ponder";
 import { db } from "ponder:api";
 import schema, { asset, token } from "ponder:schema";
+import { createTokenMetadata } from "./handlers/metadata";
 
 const app = new Hono();
+
+// Add CORS middleware
+app.use("/api/*", cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use("/graphql", graphql({ db, schema }));
 app.use("/", graphql({ db, schema }));
 app.use("/sql/*", client({ db, schema }));
+
+// Token metadata creation endpoint
+app.post("/api/create-token-metadata", createTokenMetadata);
 
 app.get("/search/:query", async (c) => {
   try {
@@ -30,8 +42,8 @@ app.get("/search/:query", async (c) => {
       .map((id) => BigInt(id));
 
     // Normalize address queries to lowercase for case-insensitive matching
-    const normalizedQuery = query.startsWith("0x") && query.length === 42 
-      ? query.toLowerCase() 
+    const normalizedQuery = query.startsWith("0x") && query.length === 42
+      ? query.toLowerCase()
       : query;
 
     // First search tokens directly
@@ -94,7 +106,7 @@ app.get("/search/:query", async (c) => {
             combinedResults.push(govToken);
           }
         }
-        
+
         return c.json(replaceBigInts(combinedResults.slice(0, 15), (v) => String(v)));
       }
     }
