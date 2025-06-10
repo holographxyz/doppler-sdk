@@ -25,7 +25,7 @@ const { unichain, mainnet, baseSepolia, ink, base } = configs;
 export default createConfig({
   database: {
     kind: "postgres",
-    connectionString: "postgresql://postgres:postgres@localhost:5432/default",
+    connectionString: process.env.DATABASE_URL,
     poolConfig: {
       max: 100,
     },
@@ -36,18 +36,18 @@ export default createConfig({
       id: 1,
       rpc: http(process.env.PONDER_RPC_URL_1),
     },
-    unichain: {
-      id: CHAIN_IDS.unichain,
-      rpc: http(process.env.PONDER_RPC_URL_130),
-    },
+    // unichain: {
+    //   id: CHAIN_IDS.unichain,
+    //   rpc: http(process.env.PONDER_RPC_URL_130),
+    // },
     baseSepolia: {
       id: CHAIN_IDS.baseSepolia,
       rpc: http(process.env.PONDER_RPC_URL_84532),
     },
-    ink: {
-      id: CHAIN_IDS.ink,
-      rpc: http(process.env.PONDER_RPC_URL_57073),
-    },
+    // ink: {
+    //   id: CHAIN_IDS.ink,
+    //   rpc: http(process.env.PONDER_RPC_URL_57073),
+    // },
     base: {
       id: CHAIN_IDS.base,
       rpc: http(process.env.PONDER_RPC_URL_8453),
@@ -69,26 +69,26 @@ export default createConfig({
       startBlock: base.v4StartBlock,
       interval: 50, // every 50 blocks
     },
-    UnichainV4PoolCheckpoints: {
-      chain: "unichain",
-      startBlock: unichain.v4StartBlock,
-      interval: 50, // every 50 blocks
-    },
-    InkV4PoolCheckpoints: {
-      chain: "ink",
-      startBlock: ink.v4StartBlock,
-      interval: 50, // every 50 blocks
-    },
-    MetricRefresherUnichain: {
-      chain: "unichain",
-      startBlock: unichain.startBlock,
-      interval: 1000, // every 1000 blocks
-    },
-    MetricRefresherInk: {
-      chain: "ink",
-      startBlock: ink.startBlock,
-      interval: 1000, // every 1000 blocks
-    },
+    // UnichainV4PoolCheckpoints: {
+    //   chain: "unichain",
+    //   startBlock: unichain.v4StartBlock,
+    //   interval: 50, // every 50 blocks
+    // },
+    // InkV4PoolCheckpoints: {
+    //   chain: "ink",
+    //   startBlock: ink.v4StartBlock,
+    //   interval: 50, // every 50 blocks
+    // },
+    // MetricRefresherUnichain: {
+    //   chain: "unichain",
+    //   startBlock: unichain.startBlock,
+    //   interval: 1000, // every 1000 blocks
+    // },
+    // MetricRefresherInk: {
+    //   chain: "ink",
+    //   startBlock: ink.startBlock,
+    //   interval: 1000, // every 1000 blocks
+    // },
     MetricRefresherBase: {
       chain: "base",
       startBlock: base.startBlock,
@@ -104,14 +104,14 @@ export default createConfig({
     Airlock: {
       abi: AirlockABI,
       chain: {
-        unichain: {
-          startBlock: unichain.startBlock,
-          address: unichain.shared.airlock,
-        },
-        ink: {
-          startBlock: ink.startBlock,
-          address: ink.shared.airlock,
-        },
+        // unichain: {
+        //   startBlock: unichain.startBlock,
+        //   address: unichain.shared.airlock,
+        // },
+        // ink: {
+        //   startBlock: ink.startBlock,
+        //   address: ink.shared.airlock,
+        // },
         baseSepolia: {
           startBlock: baseSepolia.v4StartBlock,
           address: baseSepolia.shared.airlock,
@@ -125,14 +125,14 @@ export default createConfig({
     UniswapV3Initializer: {
       abi: UniswapV3InitializerABI,
       chain: {
-        unichain: {
-          startBlock: unichain.startBlock,
-          address: unichain.v3.v3Initializer,
-        },
-        ink: {
-          startBlock: ink.startBlock,
-          address: ink.v3.v3Initializer,
-        },
+        // unichain: {
+        //   startBlock: unichain.startBlock,
+        //   address: unichain.v3.v3Initializer,
+        // },
+        // ink: {
+        //   startBlock: ink.startBlock,
+        //   address: ink.v3.v3Initializer,
+        // },
         baseSepolia: {
           startBlock: baseSepolia.v4StartBlock,
           address: baseSepolia.v3.v3Initializer,
@@ -146,14 +146,14 @@ export default createConfig({
     UniswapV4Initializer: {
       abi: UniswapV4InitializerABI,
       chain: {
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: unichain.v4.v4Initializer,
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: ink.v4.v4Initializer,
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: unichain.v4.v4Initializer,
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: ink.v4.v4Initializer,
+        // },
         baseSepolia: {
           startBlock: baseSepolia.v4StartBlock,
           address: baseSepolia.v4.v4Initializer,
@@ -171,35 +171,35 @@ export default createConfig({
           startBlock: base.v4StartBlock,
           address: base.v4.v4Initializer2,
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: unichain.v4.v4Initializer2,
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: ink.v4.v4Initializer2,
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: unichain.v4.v4Initializer2,
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: ink.v4.v4Initializer2,
+        // },
       },
     },
     DERC20: {
       abi: DERC20ABI,
       chain: {
-        unichain: {
-          startBlock: unichain.startBlock,
-          address: factory({
-            address: unichain.v3.v3Initializer,
-            event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
-        ink: {
-          startBlock: ink.startBlock,
-          address: factory({
-            address: ink.v3.v3Initializer,
-            event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.startBlock,
+        //   address: factory({
+        //     address: unichain.v3.v3Initializer,
+        //     event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
+        // ink: {
+        //   startBlock: ink.startBlock,
+        //   address: factory({
+        //     address: ink.v3.v3Initializer,
+        //     event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
         baseSepolia: {
           startBlock: baseSepolia.v4StartBlock,
           address: factory({
@@ -237,22 +237,22 @@ export default createConfig({
             parameter: "asset",
           }),
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: factory({
-            address: unichain.v4.v4Initializer,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: factory({
-            address: ink.v4.v4Initializer,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: factory({
+        //     address: unichain.v4.v4Initializer,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: factory({
+        //     address: ink.v4.v4Initializer,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
       },
     },
     V4DERC20_2: {
@@ -266,43 +266,43 @@ export default createConfig({
             parameter: "asset",
           }),
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: factory({
-            address: unichain.v4.v4Initializer2,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: factory({
-            address: ink.v4.v4Initializer2,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "asset",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: factory({
+        //     address: unichain.v4.v4Initializer2,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: factory({
+        //     address: ink.v4.v4Initializer2,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "asset",
+        //   }),
+        // },
       },
     },
     UniswapV3Pool: {
       abi: UniswapV3PoolABI,
       chain: {
-        unichain: {
-          startBlock: unichain.startBlock,
-          address: factory({
-            address: unichain.v3.v3Initializer,
-            event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
-            parameter: "poolOrHook",
-          }),
-        },
-        ink: {
-          startBlock: ink.startBlock,
-          address: factory({
-            address: ink.v3.v3Initializer,
-            event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
-            parameter: "poolOrHook",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.startBlock,
+        //   address: factory({
+        //     address: unichain.v3.v3Initializer,
+        //     event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
+        //     parameter: "poolOrHook",
+        //   }),
+        // },
+        // ink: {
+        //   startBlock: ink.startBlock,
+        //   address: factory({
+        //     address: ink.v3.v3Initializer,
+        //     event: getAbiItem({ abi: UniswapV3InitializerABI, name: "Create" }),
+        //     parameter: "poolOrHook",
+        //   }),
+        // },
         baseSepolia: {
           startBlock: baseSepolia.v4StartBlock,
           address: factory({
@@ -370,17 +370,17 @@ export default createConfig({
             parameter: "pool",
           }),
         },
-        ink: {
-          startBlock: ink.startBlock,
-          address: factory({
-            address: ink.shared.airlock,
-            event: getAbiItem({
-              abi: AirlockABI,
-              name: "Migrate",
-            }),
-            parameter: "pool",
-          }),
-        },
+        // ink: {
+        //   startBlock: ink.startBlock,
+        //   address: factory({
+        //     address: ink.shared.airlock,
+        //     event: getAbiItem({
+        //       abi: AirlockABI,
+        //       name: "Migrate",
+        //     }),
+        //     parameter: "pool",
+        //   }),
+        // },
         base: {
           startBlock: base.startBlock,
           address: factory({
@@ -397,17 +397,17 @@ export default createConfig({
     UniswapV2PairUnichain: {
       abi: UniswapV2PairABI,
       chain: {
-        unichain: {
-          startBlock: unichain.startBlock,
-          address: factory({
-            address: unichain.v2.factory,
-            event: getAbiItem({
-              abi: UniswapV2FactoryABI,
-              name: "PairCreated",
-            }),
-            parameter: "pair",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.startBlock,
+        //   address: factory({
+        //     address: unichain.v2.factory,
+        //     event: getAbiItem({
+        //       abi: UniswapV2FactoryABI,
+        //       name: "PairCreated",
+        //     }),
+        //     parameter: "pair",
+        //   }),
+        // },
       },
     },
     PoolManager: {
@@ -421,14 +421,14 @@ export default createConfig({
           startBlock: base.v4StartBlock,
           address: base.v4.poolManager,
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: unichain.v4.poolManager,
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: ink.v4.poolManager,
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: unichain.v4.poolManager,
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: ink.v4.poolManager,
+        // },
       },
     },
     UniswapV4Pool: {
@@ -450,22 +450,22 @@ export default createConfig({
             parameter: "poolOrHook",
           }),
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: factory({
-            address: unichain.v4.v4Initializer,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "poolOrHook",
-          }),
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: factory({
-            address: ink.v4.v4Initializer,
-            event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
-            parameter: "poolOrHook",
-          }),
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: factory({
+        //     address: unichain.v4.v4Initializer,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "poolOrHook",
+        //   }),
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: factory({
+        //     address: ink.v4.v4Initializer,
+        //     event: getAbiItem({ abi: UniswapV4InitializerABI, name: "Create" }),
+        //     parameter: "poolOrHook",
+        //   }),
+        // },
       },
     },
     UniswapV4Pool2: {
@@ -475,14 +475,14 @@ export default createConfig({
           startBlock: base.v4StartBlock,
           address: base.v4.v4Initializer2,
         },
-        unichain: {
-          startBlock: unichain.v4StartBlock,
-          address: unichain.v4.v4Initializer2,
-        },
-        ink: {
-          startBlock: ink.v4StartBlock,
-          address: ink.v4.v4Initializer2,
-        },
+        // unichain: {
+        //   startBlock: unichain.v4StartBlock,
+        //   address: unichain.v4.v4Initializer2,
+        // },
+        // ink: {
+        //   startBlock: ink.v4StartBlock,
+        //   address: ink.v4.v4Initializer2,
+        // },
       },
     },
   },
