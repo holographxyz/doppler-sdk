@@ -17,7 +17,7 @@ const metadataSchema = z.object({
   }),
   description: z.string().max(500).optional(),
   image: z.string(), // URL or IPFS hash
-  createdAddress: z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
+  creatorAddress: z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
   receiverAddress:  z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
   socials: z.object({
     twitter: z.string().optional(),
@@ -33,14 +33,14 @@ export async function createTokenMetadata(c: Context) {
     const body = await c.req.json();
     const validated = metadataSchema.parse(body);
 
-    // 2. Create metadata object with createdBy field
+    // 2. Create metadata with creatorAddress and receiverAddress fields
     const metadata = {
       name: validated.name,
       symbol: validated.symbol,
       description: validated.description,
       image: validated.image,
       socials: validated.socials || {},
-      createdBy: validated.createdAddress,
+      creatorAddress: validated.creatorAddress,
       receiverAddress: validated.receiverAddress,
     };
 
