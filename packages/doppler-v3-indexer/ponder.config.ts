@@ -17,6 +17,7 @@ import { LockableUniswapV3InitializerABI } from "@app/abis/v3-abis/LockableUnisw
 
 const { unichain, mainnet, baseSepolia, ink, base } = chainConfigs;
 
+// NOTE: Ink and unichain objects are commented out because we are not on those chains.
 export default createConfig({
   database: {
     kind: "postgres",
