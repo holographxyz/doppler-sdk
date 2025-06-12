@@ -22,6 +22,7 @@ import { UniswapV2FactoryABI } from "@app/abis/UniswapV2Factory";
 
 const { unichain, mainnet, baseSepolia, ink, base } = configs;
 
+// NOTE: Ink and unichain objects are commented out because we are not on those chains.
 export default createConfig({
   database: {
     kind: "postgres",

@@ -13,6 +13,7 @@ import {
 } from "ponder";
 import { db } from "ponder:api";
 import schema, { token } from "ponder:schema";
+
 import { createTokenMetadata } from "./handlers/metadata";
 
 const app = new Hono();

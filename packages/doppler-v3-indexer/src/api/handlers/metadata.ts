@@ -1,6 +1,7 @@
 import PinataSDK from '@pinata/sdk';
 import { z } from 'zod';
 import type { Context } from 'hono';
+import { isAddress } from "viem";
 
 // Initialize Pinata
 const pinata = new PinataSDK(
@@ -10,11 +11,14 @@ const pinata = new PinataSDK(
 
 // Enhanced validation schema matching PRD specs
 const metadataSchema = z.object({
-  name: z.string().min(1).max(100),
-  symbol: z.string().min(1).max(20),
-  description: z.string().max(1000),
+  name: z.string().min(3).max(50),
+  symbol: z.string().min(2).max(8).regex(/^[A-Z0-9]+$/, {
+    message: "Ticker can only contain uppercase letters and numbers",
+  }),
+  description: z.string().max(500).optional(),
   image: z.string(), // URL or IPFS hash
-  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  createdAddress: z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
+  receiverAddress:  z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
   socials: z.object({
     twitter: z.string().optional(),
     telegram: z.string().optional(),
@@ -25,9 +29,6 @@ const metadataSchema = z.object({
 
 export async function createTokenMetadata(c: Context) {
   try {
-    console.log(process.env)
-    console.log('PINATA_API_KEY', process.env.PINATA_API_KEY)
-    console.log('PINATA_API_SECRET', process.env.PINATA_API_SECRET)
     // 1. Parse and validate request body
     const body = await c.req.json();
     const validated = metadataSchema.parse(body);
@@ -39,7 +40,8 @@ export async function createTokenMetadata(c: Context) {
       description: validated.description,
       image: validated.image,
       socials: validated.socials || {},
-      createdBy: validated.walletAddress,
+      createdBy: validated.createdAddress,
+      receiverAddress: validated.receiverAddress,
     };
 
     // 3. Upload to IPFS
