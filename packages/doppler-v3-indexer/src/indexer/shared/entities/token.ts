@@ -2,6 +2,7 @@ import { Context } from "ponder:registry";
 import { token } from "ponder.schema";
 import { Address, zeroAddress } from "viem";
 import { DERC20ABI } from "@app/abis";
+import { validateTokenMetadata, logValidationResult } from "../utils/metadata-validation";
 
 export const insertTokenIfNotExists = async ({
   tokenAddress,
@@ -160,6 +161,23 @@ export const insertTokenIfNotExists = async ({
       }
     }
 
+    // Validate and structure the metadata
+    let finalTokenUriData = tokenUriData;
+    if (tokenUriData) {
+      const validationResult = validateTokenMetadata(tokenUriData, {
+        name: nameResult?.result ?? `Unknown Token (${address})`,
+        symbol: symbolResult?.result ?? "???",
+        creatorAddress: creatorAddress,
+      });
+
+      // Log validation results for monitoring
+      logValidationResult(address, validationResult);
+
+      // Use structured metadata (includes extracted socials) even if validation fails
+      // This ensures backward compatibility while improving data structure
+      finalTokenUriData = validationResult.structured;
+    }
+
     return await context.db
       .insert(token)
       .values({
@@ -174,7 +192,7 @@ export const insertTokenIfNotExists = async ({
         lastSeenAt: timestamp,
         isDerc20,
         image,
-        tokenUriData,
+        tokenUriData: finalTokenUriData,
         pool: isDerc20 ? poolAddress : undefined,
         derc20Data: isDerc20 ? address : undefined,
       })
