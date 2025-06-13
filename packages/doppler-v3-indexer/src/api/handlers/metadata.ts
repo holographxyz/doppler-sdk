@@ -1,7 +1,7 @@
 import PinataSDK from '@pinata/sdk';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import { isAddress } from "viem";
+import { tokenMetadataSchema } from '@app/indexer/shared/utils/metadata-validation';
 
 // Initialize Pinata
 const pinata = new PinataSDK(
@@ -9,29 +9,11 @@ const pinata = new PinataSDK(
   process.env.PINATA_API_SECRET!
 );
 
-// Enhanced validation schema matching PRD specs
-const metadataSchema = z.object({
-  name: z.string().min(3).max(50),
-  symbol: z.string().min(2).max(8).regex(/^[A-Z0-9]+$/, {
-    message: "Ticker can only contain uppercase letters and numbers",
-  }),
-  description: z.string().max(500).optional(),
-  image: z.string(), // URL or IPFS hash
-  creatorAddress: z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
-  receiverAddress:  z.string().refine(isAddress, { message: "Invalid fee receiver address" }).optional(),
-  socials: z.object({
-    twitter: z.string().optional(),
-    telegram: z.string().optional(),
-    website: z.string().optional(),
-    discord: z.string().optional(),
-  }).optional(),
-});
-
 export async function createTokenMetadata(c: Context) {
   try {
     // 1. Parse and validate request body
     const body = await c.req.json();
-    const validated = metadataSchema.parse(body);
+    const validated = tokenMetadataSchema.parse(body);
 
     // 2. Create metadata with creatorAddress and receiverAddress fields
     const metadata = {
