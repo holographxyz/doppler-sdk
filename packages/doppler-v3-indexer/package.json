@@ -9,7 +9,9 @@
     "db": "ponder db",
     "codegen": "ponder codegen",
     "lint": "eslint .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@pinata/sdk": "^2.1.0",
@@ -24,7 +26,8 @@
     "@types/node": "^20.9.0",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.8.5",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^3.2.3"
   },
   "engines": {
     "node": ">=18.14"
