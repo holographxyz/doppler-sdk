@@ -37,6 +37,8 @@ export const token = onchainTable(
     addressIdx: index().on(table.address),
     chainIdIdx: index().on(table.chainId),
     poolIdx: index().on(table.pool),
+    firstSeenAtIdx: index().on(table.firstSeenAt),
+    chainFirstSeenIdx: index().on(table.chainId, table.firstSeenAt),
   })
 );
 
@@ -196,6 +198,7 @@ export const pool = onchainTable(
     totalFee1: t.bigint().notNull(),
     graduationThreshold: t.bigint().notNull(),
     graduationBalance: t.bigint().notNull(),
+    graduationPercentage: t.real().notNull().default(0),
     isToken0: t.boolean().notNull(),
     lastRefreshed: t.bigint(),
     lastSwapTimestamp: t.bigint(),
@@ -216,6 +219,8 @@ export const pool = onchainTable(
     quoteTokenIdx: index().on(table.quoteToken),
     lastRefreshedIdx: index().on(table.lastRefreshed),
     lastSwapTimestampIdx: index().on(table.lastSwapTimestamp),
+    graduationPercentageIdx: index().on(table.graduationPercentage),
+    chainGraduationIdx: index().on(table.chainId, table.graduationPercentage),
   })
 );
 

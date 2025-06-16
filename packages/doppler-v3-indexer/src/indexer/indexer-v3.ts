@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 import { computeV3Price } from "@app/utils/v3-utils";
 import { computeGraduationThresholdDelta } from "@app/utils/v3-utils/computeGraduationThreshold";
+import { computeGraduationPercentage } from "@app/utils/computeGraduationPercentage";
 import {
   insertPositionIfNotExists,
   updatePosition,
@@ -123,6 +124,7 @@ ponder.on("UniswapV3Pool:Mint", async ({ event, context }) => {
     reserves0,
     reserves1,
     graduationThreshold,
+    graduationBalance,
   } = await insertPoolIfNotExists({
     poolAddress: address,
     timestamp,
@@ -173,11 +175,18 @@ ponder.on("UniswapV3Pool:Mint", async ({ event, context }) => {
     },
   });
 
+  const newGraduationThreshold = graduationThreshold + graduationThresholdDelta;
+  const graduationPercentage = computeGraduationPercentage(
+    graduationBalance,
+    newGraduationThreshold
+  );
+
   await updatePool({
     poolAddress: address,
     context,
     update: {
-      graduationThreshold: graduationThreshold + graduationThresholdDelta,
+      graduationThreshold: newGraduationThreshold,
+      graduationPercentage,
       liquidity: liquidity + amount,
       dollarLiquidity: liquidityUsd,
       reserves0: reserves0 + amount0,
@@ -223,6 +232,7 @@ ponder.on("UniswapV3Pool:Burn", async ({ event, context }) => {
     reserves0,
     reserves1,
     graduationThreshold,
+    graduationBalance,
   } = await insertPoolIfNotExists({
     poolAddress: address,
     timestamp,
@@ -270,13 +280,20 @@ ponder.on("UniswapV3Pool:Burn", async ({ event, context }) => {
       liquidityUsd,
     },
   });
+  const newGraduationThreshold = graduationThreshold - graduationThresholdDelta;
+  const graduationPercentage = computeGraduationPercentage(
+    graduationBalance,
+    newGraduationThreshold
+  );
+
   await updatePool({
     poolAddress: address,
     context,
     update: {
       liquidity: liquidity - amount,
       dollarLiquidity: liquidityUsd,
-      graduationThreshold: graduationThreshold - graduationThresholdDelta,
+      graduationThreshold: newGraduationThreshold,
+      graduationPercentage,
       reserves0: reserves0 - amount0,
       reserves1: reserves1 - amount1,
     },
@@ -312,6 +329,7 @@ ponder.on("UniswapV3Pool:Swap", async ({ event, context }) => {
     totalFee0,
     totalFee1,
     graduationBalance,
+    graduationThreshold,
   } = await insertPoolIfNotExists({
     poolAddress: address,
     timestamp,
@@ -428,6 +446,12 @@ ponder.on("UniswapV3Pool:Swap", async ({ event, context }) => {
     ethPrice,
     marketCapUsd,
   });
+  const newGraduationBalance = graduationBalance + quoteDelta;
+  const graduationPercentage = computeGraduationPercentage(
+    newGraduationBalance,
+    graduationThreshold
+  );
+
   await updatePool({
     poolAddress: address,
     context,
@@ -437,7 +461,8 @@ ponder.on("UniswapV3Pool:Swap", async ({ event, context }) => {
       dollarLiquidity,
       totalFee0: totalFee0 + fee0,
       totalFee1: totalFee1 + fee1,
-      graduationBalance: graduationBalance + quoteDelta,
+      graduationBalance: newGraduationBalance,
+      graduationPercentage,
       lastRefreshed: timestamp,
       lastSwapTimestamp: timestamp,
       marketCapUsd,
