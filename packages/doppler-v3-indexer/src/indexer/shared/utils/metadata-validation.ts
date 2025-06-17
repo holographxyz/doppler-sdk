@@ -12,6 +12,7 @@ export const tokenMetadataSchema = z.object({
   creatorAddress: z.string().refine(isAddress, { message: "Invalid creator address" }).optional(),
   receiverAddress: z.string().refine(isAddress, { message: "Invalid receiver address" }).optional(),
   socials: z.object({
+    x: z.string().optional(),
     twitter: z.string().optional(),
     telegram: z.string().optional(),
     website: z.string().optional(),
@@ -28,13 +29,13 @@ export function extractSocials(rawMetadata: any): TokenMetadata['socials'] {
   }
 
   const socials: TokenMetadata['socials'] = {};
-  
+
   // Handle multiple field name variations
   socials.twitter = rawMetadata?.twitter || rawMetadata?.x || rawMetadata?.socials?.twitter || rawMetadata?.socials?.x;
   socials.telegram = rawMetadata?.telegram || rawMetadata?.socials?.telegram || rawMetadata?.tg;
   socials.website = rawMetadata?.website || rawMetadata?.url || rawMetadata?.socials?.website || rawMetadata?.web;
   socials.discord = rawMetadata?.discord || rawMetadata?.socials?.discord;
-  
+
   // Clean up social fields
   if (socials.twitter && typeof socials.twitter === 'string') {
     // Remove @ symbol from Twitter handles
@@ -42,7 +43,7 @@ export function extractSocials(rawMetadata: any): TokenMetadata['socials'] {
       socials.twitter = socials.twitter.replace('@', '');
     }
   }
-  
+
   // Remove empty fields
   Object.keys(socials).forEach(key => {
     const socialKey = key as keyof typeof socials;
@@ -50,7 +51,7 @@ export function extractSocials(rawMetadata: any): TokenMetadata['socials'] {
       delete socials[socialKey];
     }
   });
-  
+
   return Object.keys(socials).length > 0 ? socials : undefined;
 }
 
@@ -62,9 +63,9 @@ export function validateTokenMetadata(
     symbol?: string;
     creatorAddress?: string;
   } = {}
-): { 
-  validated: TokenMetadata | null; 
-  isValid: boolean; 
+): {
+  validated: TokenMetadata | null;
+  isValid: boolean;
   errors?: z.ZodError;
   structured: any;
 } {
@@ -114,7 +115,7 @@ export function validateTokenMetadata(
         structured,
       };
     }
-    
+
     return {
       validated: null,
       isValid: false,
