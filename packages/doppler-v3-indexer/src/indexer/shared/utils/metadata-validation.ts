@@ -3,10 +3,8 @@ import { isAddress } from 'viem';
 
 // Token metadata validation schema
 export const tokenMetadataSchema = z.object({
-  name: z.string().min(3).max(50),
-  symbol: z.string().min(2).max(8).regex(/^[A-Z0-9]+$/, {
-    message: "Symbol can only contain uppercase letters and numbers",
-  }),
+  name: z.string().min(0).max(50), // NOTE: made this more lenient because of errors accumulating in the indexer process
+  symbol: z.string().min(0).max(50), // NOTE: made this more lenient because of errors accumulating in the indexer process
   description: z.string().max(500).optional(),
   image: z.string(), // URL or IPFS hash
   creatorAddress: z.string().refine(isAddress, { message: "Invalid creator address" }).optional(),
