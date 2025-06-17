@@ -25,6 +25,13 @@ app.use("*", cors({
   allowHeaders: ["Content-Type", "Authorization"],
 }));
 
+// Add CORS middleware
+app.use("/graphql", cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+}));
+
 app.use("/graphql", graphql({ db, schema }));
 app.use("/", graphql({ db, schema }));
 app.use("/sql/*", client({ db, schema }));
