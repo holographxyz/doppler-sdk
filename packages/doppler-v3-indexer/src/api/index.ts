@@ -20,15 +20,7 @@ const app = new Hono();
 
 // Add CORS middleware
 app.use("*", cors({
-  origin: (origin) => {
-    console.log(`origin = ${origin}`)
-    if (!origin) {
-      console.log(`no origin provided`);
-      return true
-    }
-    console.log(`origin check: ${origin.startsWith('https://holograph-launchpad')} + ${origin.endsWith('holograph.vercel.app')}`)
-    return true;
-  },
+  origin: "*",
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
 }));
