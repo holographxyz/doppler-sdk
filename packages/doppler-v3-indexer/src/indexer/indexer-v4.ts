@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 import { getV4PoolData } from "@app/utils/v4-utils";
 import { insertTokenIfNotExists } from "./shared/entities/token";
+import { computeGraduationPercentage } from "@app/utils/computeGraduationPercentage";
 import { computeMarketCap, fetchEthPrice } from "./shared/oracle";
 import { insertPoolIfNotExistsV4, updatePool } from "./shared/entities/pool";
 import { insertOrUpdateDailyVolume } from "./shared/timeseries";
@@ -158,6 +159,8 @@ ponder.on("UniswapV4Pool:Swap", async ({ event, context }) => {
     totalProceeds: totalProceedsPrev,
     totalTokensSold: totalTokensSoldPrev,
     marketCapUsd: marketCapUsdPrev,
+    graduationBalance,
+    graduationThreshold,
   } = await insertPoolIfNotExistsV4({
     poolAddress: address,
     timestamp,
@@ -238,6 +241,8 @@ ponder.on("UniswapV4Pool:Swap", async ({ event, context }) => {
         totalProceeds,
         totalTokensSold,
         marketCapUsd,
+        graduationBalance: totalProceeds,
+        graduationPercentage: computeGraduationPercentage(totalProceeds, graduationThreshold),
       },
     }),
     addAndUpdateV4PoolPriceHistory({
@@ -404,6 +409,8 @@ ponder.on("UniswapV4Pool2:Swap", async ({ event, context }) => {
     totalProceeds: totalProceedsPrev,
     totalTokensSold: totalTokensSoldPrev,
     marketCapUsd: marketCapUsdPrev,
+    graduationBalance,
+    graduationThreshold,
   } = await insertPoolIfNotExistsV4({
     poolAddress: address,
     timestamp,
@@ -493,6 +500,8 @@ ponder.on("UniswapV4Pool2:Swap", async ({ event, context }) => {
         totalProceeds,
         totalTokensSold,
         marketCapUsd,
+        graduationBalance: totalProceeds,
+        graduationPercentage: computeGraduationPercentage(totalProceeds, graduationThreshold),
       },
     }),
     insertSwapIfNotExists({
