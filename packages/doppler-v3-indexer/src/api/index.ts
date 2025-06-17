@@ -19,8 +19,11 @@ import { createTokenMetadata } from "./handlers/metadata";
 const app = new Hono();
 
 // Add CORS middleware
-app.use("/api/*", cors({
-  origin: "*",
+app.use("*", cors({
+  origin: (origin) => {
+    if (!origin) return false;
+    return origin.startsWith('https://holograph-launchpad') && origin.endsWith('holograph.vercel.app');
+  },
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
 }));
