@@ -35,6 +35,7 @@ GET /search/:query
 - `lastSeenAt` - When token was last seen (timestamp)
 - `name` - Token name (alphabetical)
 - `symbol` - Token symbol (alphabetical)
+- `marketCapUsd` - Market capitalization in USD (from related asset data)
 
 ## Search Behavior
 
@@ -62,6 +63,7 @@ GET /search/:query
       "totalSupply": "1000000000000000000000000",
       "holderCount": 1250,
       "volumeUsd": "5000000",
+      "marketCapUsd": "15000000000",
       "firstSeenAt": "1640995200000",
       "lastSeenAt": "1709251200000",
       "creatorAddress": "0x...",
@@ -115,6 +117,12 @@ GET /search/0x573225b9d4?chain_ids=1,8453,84532
 ```
 Find tokens whose address starts with "0x573225b9d4".
 
+### Sort by Market Cap
+```
+GET /search/usdc?sort=marketCapUsd&order=desc
+```
+Search for "usdc" tokens sorted by highest market cap first.
+
 ### Advanced Example
 ```
 GET /search/token?chain_ids=1,8453&page=1&limit=50&sort=firstSeenAt&order=asc
@@ -155,6 +163,7 @@ Search for "token", on Ethereum and Base, first page of 50 results, sorted by ol
 - Timestamps are Unix timestamps as strings
 - Addresses are lowercase hex strings with "0x" prefix
 - Chain IDs are numeric strings
+- `marketCapUsd` may be `null` for tokens without associated asset data
 
 ## Future Enhancements
 - Relevance scoring for text search

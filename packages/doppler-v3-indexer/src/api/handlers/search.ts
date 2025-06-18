@@ -20,7 +20,8 @@ const ALLOWED_SORT_FIELDS = [
   "firstSeenAt",
   "lastSeenAt",
   "name",
-  "symbol"
+  "symbol",
+  "marketCapUsd"
 ] as const;
 
 type SortField = typeof ALLOWED_SORT_FIELDS[number];
@@ -84,22 +85,84 @@ export async function searchTokens(c: Context) {
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / limit);
 
-    // Create the orderBy clause based on validated parameters
-    const orderByClause = validSortOrder === "desc" 
-      ? desc(token[validSortField])
-      : asc(token[validSortField]);
+    // For asset fields like marketCapUsd, we'll need to handle sorting differently
+    const isAssetField = validSortField === "marketCapUsd";
+    
+    let results;
+    if (isAssetField) {
+      // For asset fields, we'll get more results and sort post-query
+      // This is a limitation of the relations API for sorting by related fields
+      const extendedLimit = Math.min(limit * 10, 1000); // Get more results for sorting
+      
+      results = await db.query.token.findMany({
+        where: or(
+          and(
+            inArray(token.chainId, chainIds || []),
+            or(
+              ilike(token.name, `%${query}%`),
+              ilike(token.symbol, `%${query}%`)
+            )
+          ),
+          and(
+            inArray(token.chainId, chainIds || []),
+            ilike(token.address, `${query}%`)
+          )
+        ),
+        with: {
+          derc20Data: true,
+        },
+        limit: extendedLimit,
+      });
+      
+      // Sort by marketCapUsd and paginate manually
+      results.sort((a, b) => {
+        const aValue = a.derc20Data?.marketCapUsd || 0n;
+        const bValue = b.derc20Data?.marketCapUsd || 0n;
+        if (validSortOrder === "desc") {
+          return Number(bValue - aValue);
+        } else {
+          return Number(aValue - bValue);
+        }
+      });
+      
+      // Apply pagination manually
+      results = results.slice(offset, offset + limit);
+    } else {
+      // For token fields, use normal sorting
+      results = await db.query.token.findMany({
+        where: or(
+          and(
+            inArray(token.chainId, chainIds || []),
+            or(
+              ilike(token.name, `%${query}%`),
+              ilike(token.symbol, `%${query}%`)
+            )
+          ),
+          and(
+            inArray(token.chainId, chainIds || []),
+            ilike(token.address, `${query}%`)
+          )
+        ),
+        with: {
+          derc20Data: true,
+        },
+        orderBy: validSortOrder === "desc" 
+          ? desc(token[validSortField])
+          : asc(token[validSortField]),
+        limit,
+        offset,
+      });
+    }
 
-    // Get paginated results
-    const results = await db
-      .select()
-      .from(token)
-      .where(whereClause)
-      .orderBy(orderByClause)
-      .limit(limit)
-      .offset(offset);
+    // Transform results to include marketCapUsd from related asset data
+    const transformedResults = results.map(tokenItem => ({
+      ...tokenItem,
+      marketCapUsd: tokenItem.derc20Data?.marketCapUsd || null,
+      derc20Data: tokenItem.derc20Data?.address || tokenItem.derc20Data, // Keep original field format
+    }));
 
     return c.json({
-      data: replaceBigInts(results, (v) => String(v)),
+      data: replaceBigInts(transformedResults, (v) => String(v)),
       pagination: {
         page,
         limit,
