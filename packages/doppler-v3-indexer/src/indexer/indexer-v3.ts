@@ -67,7 +67,7 @@ ponder.on("UniswapV3Initializer:Create", async ({ event, context }) => {
     totalSupply,
   });
 
-  // benchmark time 
+  // benchmark time
   await Promise.all([
     insertActivePoolsBlobIfNotExists({
       context,
@@ -139,7 +139,7 @@ ponder.on("LockableUniswapV3Initializer:Create", async ({ event, context }) => {
     totalSupply,
   });
 
-  // benchmark time 
+  // benchmark time
   await Promise.all([
     insertActivePoolsBlobIfNotExists({
       context,
@@ -561,6 +561,7 @@ ponder.on("UniswapV3Pool:Mint", async ({ event, context }) => {
     isToken0,
   });
 
+  // First, ensure all entities exist
   const [positionEntity] = await Promise.all([
     insertPositionIfNotExists({
       poolAddress: address,
@@ -576,8 +577,9 @@ ponder.on("UniswapV3Pool:Mint", async ({ event, context }) => {
       timestamp,
       context,
     }),
-  ])
+  ]);
 
+  // Then perform updates
   await Promise.all([
     updateAsset({
       assetAddress: baseToken,
