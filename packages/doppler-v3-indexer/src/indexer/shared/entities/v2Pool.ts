@@ -3,7 +3,7 @@ import { Address } from "viem";
 import { Context } from "ponder:registry";
 import { getPairData } from "@app/utils/v2-utils/getPairData";
 import { insertAssetIfNotExists } from "./asset";
-import { computeV2Price } from "@app/utils/v2-utils/computeV2Price";
+import { PriceService } from "@app/core";
 import { fetchEthPrice } from "../oracle";
 import { CHAINLINK_ETH_DECIMALS } from "@app/utils/constants";
 import { insertPoolIfNotExists } from "./pool";
@@ -28,6 +28,17 @@ export const insertV2PoolIfNotExists = async ({
       context,
     });
 
+  const migrationPoolAddr = migrationPool.toLowerCase() as `0x${string}`;
+
+  const existingV2Pool = await db.find(v2Pool, {
+    address: migrationPoolAddr,
+  });
+
+  if (existingV2Pool) {
+    return existingV2Pool;
+  }
+
+
   const { baseToken } = await insertPoolIfNotExists({
     poolAddress,
     timestamp,
@@ -41,14 +52,13 @@ export const insertV2PoolIfNotExists = async ({
   const numeraireId = numeraire.toLowerCase() as `0x${string}`;
 
   const poolAddr = poolAddress.toLowerCase() as `0x${string}`;
-  const migrationPoolAddr = migrationPool.toLowerCase() as `0x${string}`;
 
   const { reserve0, reserve1 } = await getPairData({
     address: migrationPoolAddr,
     context,
   });
 
-  const price = computeV2Price({
+  const price = PriceService.computePriceFromReserves({
     assetBalance: reserve0,
     quoteBalance: reserve1,
   });

@@ -64,7 +64,7 @@ export const asset = onchainTable(
     createdAt: t.bigint().notNull(),
     migratedAt: t.bigint(),
     migrated: t.boolean().notNull().default(false),
-    percentDayChange: t.real().notNull().default(0),
+    percentDayChange: t.doublePrecision().notNull().default(0),
     marketCapUsd: t.bigint().notNull().default(0n),
     holderCount: t.integer().notNull().default(0),
     dayVolumeUsd: t.bigint().notNull().default(0n),
@@ -191,11 +191,13 @@ export const pool = onchainTable(
     dollarLiquidity: t.bigint().notNull(),
     dailyVolume: t.hex().notNull(),
     volumeUsd: t.bigint().notNull(),
-    percentDayChange: t.real().notNull(),
+    percentDayChange: t.doublePrecision().notNull().default(0),
     totalFee0: t.bigint().notNull(),
     totalFee1: t.bigint().notNull(),
-    graduationThreshold: t.bigint().notNull(),
     graduationBalance: t.bigint().notNull(),
+    graduationPercentage: t.doublePrecision().notNull().default(0),
+    minThreshold: t.bigint(),
+    maxThreshold: t.bigint().notNull(),
     isToken0: t.boolean().notNull(),
     lastRefreshed: t.bigint(),
     lastSwapTimestamp: t.bigint(),
@@ -207,6 +209,7 @@ export const pool = onchainTable(
     marketCapUsd: t.bigint().notNull().default(0n),
     migrated: t.boolean().notNull().default(false),
     migratedAt: t.bigint(),
+    isQuoteEth: t.boolean().notNull(),
   }),
   (table) => ({
     pk: primaryKey({
@@ -257,6 +260,11 @@ export const userAsset = onchainTable(
 export const v4CheckpointBlob = onchainTable("v4_checkpoint_blob", (t) => ({
   chainId: t.integer().notNull().primaryKey(),
   checkpoints: t.jsonb().notNull().default("{}"),
+}));
+
+export const pendingTokenImages = onchainTable("pending_token_images", (t) => ({
+  chainId: t.bigint().notNull().primaryKey(),
+  tokens: t.jsonb().notNull().default("{}"),
 }));
 
 export const activePoolsBlob = onchainTable("active_pools_blob", (t) => ({
