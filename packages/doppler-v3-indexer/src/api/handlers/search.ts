@@ -4,6 +4,7 @@ import {
   asc,
   count,
   desc,
+  eq,
   ilike,
   inArray,
   or,
@@ -85,6 +86,10 @@ export async function searchTokens(c: Context) {
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / limit);
 
+    // Check if we should filter by promoted status
+    const promotedParam = c.req.query("promoted");
+    const filterPromoted = promotedParam === "true";
+    
     // For asset fields like marketCapUsd, we'll need to handle sorting differently
     const isAssetField = validSortField === "marketCapUsd";
     
@@ -114,8 +119,13 @@ export async function searchTokens(c: Context) {
         limit: extendedLimit,
       });
       
-      // Sort by marketCapUsd and paginate manually
+      // Sort by isPromoted first, then by marketCapUsd
       results.sort((a, b) => {
+        // First, sort by isPromoted (promoted tokens first)
+        if (a.isPromoted && !b.isPromoted) return -1;
+        if (!a.isPromoted && b.isPromoted) return 1;
+        
+        // Then sort by marketCapUsd
         const aValue = a.derc20Data?.marketCapUsd || 0n;
         const bValue = b.derc20Data?.marketCapUsd || 0n;
         if (validSortOrder === "desc") {
@@ -125,22 +135,30 @@ export async function searchTokens(c: Context) {
         }
       });
       
+      // Apply promoted filter if requested
+      if (filterPromoted) {
+        results = results.filter(t => t.isPromoted);
+      }
+      
       // Apply pagination manually
       results = results.slice(offset, offset + limit);
     } else {
-      // For token fields, use normal sorting
-      results = await db.query.token.findMany({
-        where: or(
-          and(
-            inArray(token.chainId, chainIds || []),
-            or(
-              ilike(token.name, `%${query}%`),
-              ilike(token.symbol, `%${query}%`)
+      // For token fields, we need to fetch in two queries to prioritize promoted tokens
+      const promotedResults = await db.query.token.findMany({
+        where: and(
+          eq(token.isPromoted, true),
+          or(
+            and(
+              inArray(token.chainId, chainIds || []),
+              or(
+                ilike(token.name, `%${query}%`),
+                ilike(token.symbol, `%${query}%`)
+              )
+            ),
+            and(
+              inArray(token.chainId, chainIds || []),
+              ilike(token.address, `${query}%`)
             )
-          ),
-          and(
-            inArray(token.chainId, chainIds || []),
-            ilike(token.address, `${query}%`)
           )
         ),
         with: {
@@ -149,9 +167,41 @@ export async function searchTokens(c: Context) {
         orderBy: validSortOrder === "desc" 
           ? desc(token[validSortField])
           : asc(token[validSortField]),
-        limit,
-        offset,
       });
+      
+      let regularResults = [];
+      if (!filterPromoted) {
+        regularResults = await db.query.token.findMany({
+          where: and(
+            eq(token.isPromoted, false),
+            or(
+              and(
+                inArray(token.chainId, chainIds || []),
+                or(
+                  ilike(token.name, `%${query}%`),
+                  ilike(token.symbol, `%${query}%`)
+                )
+              ),
+              and(
+                inArray(token.chainId, chainIds || []),
+                ilike(token.address, `${query}%`)
+              )
+            )
+          ),
+          with: {
+            derc20Data: true,
+          },
+          orderBy: validSortOrder === "desc" 
+            ? desc(token[validSortField])
+            : asc(token[validSortField]),
+        });
+      }
+      
+      // Combine results: promoted first, then regular
+      const allResults = [...promotedResults, ...regularResults];
+      
+      // Apply pagination
+      results = allResults.slice(offset, offset + limit);
     }
 
     // Transform results to include marketCapUsd from related asset data
