@@ -25,6 +25,7 @@ import { tryAddActivePool } from "./shared/scheduledJobs";
 import { TickMath } from "@uniswap/v3-sdk";
 import { computeV4Price } from "@app/utils/v4-utils/computeV4Price";
 import { computeGraduationPercentage } from "@app/utils/v4-utils";
+import { insertUserActivity, getTokenSymbol } from "./shared/entities/userActivity";
 
 ponder.on("UniswapV4Initializer:Create", async ({ event, context }) => {
   const { poolOrHook, asset: assetId, numeraire } = event.args;
@@ -131,6 +132,44 @@ ponder.on("UniswapV4Initializer:Create", async ({ event, context }) => {
     ethPrice,
     marketCapUsd,
   });
+
+  // Create userActivity record for V4 pool creation
+  try {
+    const tokenSymbol = await getTokenSymbol(assetAddress, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(context.chain.id),
+      type: "create",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: 0n, // Pool creation typically has no direct USD value
+      tokenAddress: assetAddress,
+      tokenSymbol,
+      poolAddress: poolAddress,
+      assetAddress: assetAddress,
+      metadata: {
+        poolType: "v4",
+        numeraire: numeraireAddress,
+        creator: event.transaction.from,
+        marketCapUsd: marketCapUsd.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        graduationPercentage: "0", // New pools start at 0%
+        v4Config: {
+          startingTime: v4Config.startingTime.toString(),
+          endingTime: v4Config.endingTime.toString(),
+          epochLength: v4Config.epochLength.toString(),
+          isToken0: v4Config.isToken0,
+        },
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V4 pool creation ${event.transaction.hash}:`, error);
+    // Don't throw - allow the pool creation processing to continue
+  }
 });
 
 ponder.on("UniswapV4Pool:Swap", async ({ event, context }) => {
@@ -294,6 +333,44 @@ ponder.on("UniswapV4Pool:Swap", async ({ event, context }) => {
       context,
     }),
   ]);
+
+  // Create userActivity record for V4 swap
+  try {
+    const tokenSymbol = await getTokenSymbol(baseToken, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(chain.id),
+      type: type === "buy" ? "buy" : "sell",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: swapValueUsd,
+      amountIn,
+      amountOut,
+      tokenAddress: baseToken,
+      tokenSymbol,
+      tokenAmount: amountIn, // Primary amount for V4 swaps
+      poolAddress: address,
+      assetAddress: baseToken,
+      metadata: {
+        poolType: "v4",
+        currentTick: currentTick.toString(),
+        totalProceeds: totalProceeds.toString(),
+        totalTokensSold: totalTokensSold.toString(),
+        graduationPercentage: graduationPercentage.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        quoteIn: quoteIn.toString(),
+        liquidityUsd: dollarLiquidity.toString(),
+        marketCapUsd: marketCapUsd.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V4 swap ${event.transaction.hash}:`, error);
+    // Don't throw - allow the swap processing to continue
+  }
 });
 
 ponder.on("UniswapV4Initializer2:Create", async ({ event, context }) => {
@@ -404,6 +481,44 @@ ponder.on("UniswapV4Initializer2:Create", async ({ event, context }) => {
     ethPrice,
     marketCapUsd,
   });
+
+  // Create userActivity record for V4 pool creation (Initializer2)
+  try {
+    const tokenSymbol = await getTokenSymbol(assetAddress, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(context.chain.id),
+      type: "create",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: 0n, // Pool creation typically has no direct USD value
+      tokenAddress: assetAddress,
+      tokenSymbol,
+      poolAddress: poolAddress,
+      assetAddress: assetAddress,
+      metadata: {
+        poolType: "v4-initializer2",
+        numeraire: numeraireAddress,
+        creator: event.transaction.from,
+        marketCapUsd: marketCapUsd.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        graduationPercentage: "0", // New pools start at 0%
+        v4Config: {
+          startingTime: v4Config.startingTime.toString(),
+          endingTime: v4Config.endingTime.toString(),
+          epochLength: v4Config.epochLength.toString(),
+          isToken0: v4Config.isToken0,
+        },
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V4 Initializer2 pool creation ${event.transaction.hash}:`, error);
+    // Don't throw - allow the pool creation processing to continue
+  }
 });
 
 
@@ -565,7 +680,7 @@ ponder.on("UniswapV4PoolSelfCorrecting:Swap", async ({ event, context }) => {
     previousProceeds: totalProceedsPrev,
   });
 
-  const { totalSupply } = await insertTokenIfNotExists({
+  const { totalSupply, symbol } = await insertTokenIfNotExists({
     tokenAddress: baseToken,
     creatorAddress: event.transaction.from,
     timestamp,
@@ -842,4 +957,43 @@ ponder.on("UniswapV4Pool2:Swap", async ({ event, context }) => {
       context,
     }),
   ]);
+
+  // Create userActivity record for V4 Pool2 swap
+  try {
+    // const tokenSymbol = await getTokenSymbol(baseToken, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(chainId),
+      type: type === "buy" ? "buy" : "sell",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: swapValueUsd,
+      amountIn: BigInt(amountIn),
+      amountOut: BigInt(amountOut),
+      tokenAddress: baseToken,
+      tokenSymbol: symbol,
+      tokenAmount: BigInt(amountIn), // Primary amount for V4 swaps
+      poolAddress: address,
+      assetAddress: baseToken,
+      metadata: {
+        poolType: "v4-pool2",
+        currentTick: currentTick.toString(),
+        totalProceeds: totalProceeds.toString(),
+        totalTokensSold: totalTokensSold.toString(),
+        graduationPercentage: graduationPercentage.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        quoteIn: quoteIn.toString(),
+        liquidityUsd: dollarLiquidity.toString(),
+        marketCapUsd: marketCapUsd.toString(),
+        maxProceeds: poolData.poolConfig.maxProceeds.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V4 Pool2 swap ${event.transaction.hash}:`, error);
+    // Don't throw - allow the swap processing to continue
+  }
 });
