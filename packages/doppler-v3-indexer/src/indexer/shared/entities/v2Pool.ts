@@ -39,13 +39,14 @@ export const insertV2PoolIfNotExists = async ({
     return existingV2Pool;
   }
 
-
-  const { baseToken } = await insertPoolIfNotExists({
+  const pool = await insertPoolIfNotExists({
     poolAddress,
     timestamp,
     context,
     ethPrice,
   });
+
+  const { baseToken } = pool
 
   const isToken0 = baseToken === assetAddress;
 
