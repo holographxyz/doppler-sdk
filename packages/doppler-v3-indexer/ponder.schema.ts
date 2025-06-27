@@ -32,11 +32,13 @@ export const token = onchainTable(
     volumeUsd: t.bigint().notNull().default(0n),
     holderCount: t.integer().notNull().default(0),
     creatorAddress: t.hex().notNull(),
+    isPromoted: t.boolean().notNull().default(false),
   }),
   (table) => ({
     addressIdx: index().on(table.address),
     chainIdIdx: index().on(table.chainId),
     poolIdx: index().on(table.pool),
+    isPromotedIdx: index().on(table.isPromoted),
   })
 );
 

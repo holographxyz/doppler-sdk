@@ -9,6 +9,7 @@ import schema from "ponder:schema";
 
 import { createTokenMetadata } from "./handlers/metadata";
 import { searchTokens } from "./handlers/search";
+import { handlePromoteToken, handleUnpromoteToken, handleGetPromotedTokens } from "./handlers/admin";
 
 const app = new Hono();
 
@@ -34,5 +35,10 @@ app.use("/sql/*", client({ db, schema }));
 app.post("/api/create-token-metadata", createTokenMetadata);
 
 app.get("/search/:query", searchTokens);
+
+// Admin endpoints for token promotion
+app.put("/api/admin/tokens/:address/promote", handlePromoteToken);
+app.delete("/api/admin/tokens/:address/promote", handleUnpromoteToken);
+app.get("/api/admin/tokens/promoted", handleGetPromotedTokens);
 
 export default app;
