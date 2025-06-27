@@ -296,6 +296,61 @@ export const swap = onchainTable("swap", (t) => ({
   usdPrice: t.bigint().notNull(),
 }));
 
+export const userActivity = onchainTable(
+  "userActivity",
+  (t) => ({
+    // Primary key
+    id: t.text().primaryKey(), // Format: {chainId}-{txHash}-{logIndex}
+    
+    // User and chain info
+    userId: t.text().notNull(),
+    chainId: t.bigint().notNull(),
+    
+    // Activity details
+    type: t.text().notNull(), // "create", "stake", "sell", "buy", "unstake", "claim"
+    timestamp: t.bigint().notNull(),
+    txHash: t.text().notNull(),
+    
+    // Financial data
+    usdValue: t.bigint().notNull().default(0n),
+    amountIn: t.bigint(),
+    amountOut: t.bigint(),
+    
+    // Token info
+    tokenAddress: t.text(),
+    tokenSymbol: t.text(),
+    tokenAmount: t.bigint(),
+    
+    // Pool/Asset references
+    poolAddress: t.text(),
+    assetAddress: t.text(),
+    
+    // Type-specific metadata
+    metadata: t.jsonb(),
+    
+    // Timestamps
+    createdAt: t.bigint().notNull().default(0n),
+    updatedAt: t.bigint().notNull().default(0n),
+  }),
+  (table) => ({
+    // Primary indexes for individual field queries
+    userIdIdx: index().on(table.userId),
+    timestampIdx: index().on(table.timestamp),
+    txHashIdx: index().on(table.txHash),
+    tokenSymbolIdx: index().on(table.tokenSymbol),
+    
+    // Compound indexes for optimal query performance
+    userTimestampIdx: index().on(table.userId, table.timestamp), // User activity feeds (most common query)
+    userTypeIdx: index().on(table.userId, table.type), // User activities by type
+    chainUserIdx: index().on(table.chainId, table.userId), // Cross-chain user queries
+    typeTimestampIdx: index().on(table.type, table.timestamp), // Activity type feeds
+    
+    // Additional performance indexes
+    chainIdIdx: index().on(table.chainId), // Chain-specific queries
+    typeIdx: index().on(table.type), // Activity type filtering
+  })
+);
+
 /* RELATIONS */
 
 // assets have one pool
@@ -355,9 +410,10 @@ export const tokenRelations = relations(token, ({ one }) => ({
   }),
 }));
 
-// users have many assets and positions
+// users have many assets, positions, and activities
 export const userRelations = relations(user, ({ many }) => ({
   userAssets: many(userAsset),
+  userActivities: many(userActivity),
 }));
 
 // userAsset has one user and one asset
@@ -380,5 +436,17 @@ export const hourBucketUsdRelations = relations(hourBucketUsd, ({ one }) => ({
   pool: one(pool, {
     fields: [hourBucketUsd.pool],
     references: [pool.address],
+  }),
+}));
+
+// userActivity has relationships to user, swap, and pool
+export const userActivityRelations = relations(userActivity, ({ one }) => ({
+  user: one(user, {
+    fields: [userActivity.userId],
+    references: [user.address],
+  }),
+  swap: one(swap, {
+    fields: [userActivity.txHash],
+    references: [swap.txHash],
   }),
 }));

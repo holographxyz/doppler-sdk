@@ -14,6 +14,7 @@ import {
   updatePool,
 } from "./shared/entities/pool";
 import { insertAssetIfNotExists, updateAsset } from "./shared/entities/asset";
+import { insertUserActivity, getTokenSymbol } from "./shared/entities/userActivity";
 import { computeDollarLiquidity } from "@app/utils/computeDollarLiquidity";
 import { insertOrUpdateBuckets } from "./shared/timeseries";
 import { computeMarketCap, fetchEthPrice } from "./shared/oracle";
@@ -59,14 +60,14 @@ ponder.on("UniswapV3Initializer:Create", async ({ event, context }) => {
   ])
 
   const { price } = poolEntity;
-  const { totalSupply } = assetTokenEntity;
+  const { totalSupply, symbol } = assetTokenEntity;
   const marketCapUsd = computeMarketCap({
     price,
     ethPrice,
     totalSupply,
   });
 
-  // benchmark time 
+  // benchmark time
   await Promise.all([
     insertActivePoolsBlobIfNotExists({
       context,
@@ -95,6 +96,37 @@ ponder.on("UniswapV3Initializer:Create", async ({ event, context }) => {
       marketCapUsd,
     }),
   ]);
+
+  // Create userActivity record for pool creation
+  try {
+    // const tokenSymbol = await getTokenSymbol(assetId, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(context.chain.id),
+      type: "create",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: 0n, // Pool creation typically has no direct USD value
+      tokenAddress: assetId,
+      tokenSymbol: symbol,
+      poolAddress: poolOrHookId,
+      assetAddress: assetId,
+      metadata: {
+        poolType: "v3",
+        numeraire: numeraire,
+        creator: event.transaction.from,
+        marketCapUsd: marketCapUsd.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V3 pool creation ${event.transaction.hash}:`, error);
+    // Don't throw - allow the pool creation processing to continue
+  }
 });
 
 ponder.on("UniswapV3Pool:Mint", async ({ event, context }) => {
@@ -452,4 +484,42 @@ ponder.on("UniswapV3Pool:Swap", async ({ event, context }) => {
       },
     }),
   ]);
+
+  // Create userActivity record for the swap
+  try {
+    const tokenSymbol = await getTokenSymbol(baseToken, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(chainId),
+      type: type === "buy" ? "buy" : "sell",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: swapValueUsd,
+      amountIn,
+      amountOut: amountOut < 0n ? -amountOut : amountOut, // Convert to positive
+      tokenAddress: baseToken,
+      tokenSymbol,
+      tokenAmount: isToken0 ? (amount0 > 0n ? amount0 : -amount0) : (amount1 > 0n ? amount1 : -amount1),
+      poolAddress: address,
+      assetAddress: baseToken,
+      metadata: {
+        poolType: "v3",
+        fee: fee.toString(),
+        tick: event.args.tick.toString(),
+        sqrtPriceX96: sqrtPriceX96.toString(),
+        liquidity: event.args.liquidity.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        quoteDelta: quoteDelta.toString(),
+        fee0: fee0.toString(),
+        fee1: fee1.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V3 swap ${event.transaction.hash}:`, error);
+    // Don't throw - allow the swap processing to continue
+  }
 });

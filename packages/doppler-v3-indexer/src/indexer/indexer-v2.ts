@@ -13,6 +13,8 @@ import {
   updateAsset,
   updatePool,
   updateV2Pool,
+  insertUserActivity,
+  getTokenSymbol,
 } from "./shared/entities";
 import { CHAINLINK_ETH_DECIMALS } from "@app/utils/constants";
 import { tryAddActivePool } from "./shared/scheduledJobs";
@@ -67,13 +69,15 @@ ponder.on("UniswapV2Pair:Swap", async ({ event, context }) => {
 
   const price = PriceService.computePriceFromReserves({ assetBalance, quoteBalance });
 
-  const { totalSupply } = await insertTokenIfNotExists({
+  const token = await insertTokenIfNotExists({
     tokenAddress: baseToken,
     creatorAddress: address,
     timestamp,
     context,
     isDerc20: true,
   });
+
+  const { totalSupply } = token
 
   const metrics = SwapService.calculateMarketMetrics({
     totalSupply,
@@ -146,7 +150,7 @@ ponder.on("UniswapV2Pair:Swap", async ({ event, context }) => {
   };
 
   // Perform common updates via orchestrator
-  Promise.all([
+  await Promise.all([
     await SwapOrchestrator.performSwapUpdates(
       {
         swapData,
@@ -168,7 +172,39 @@ ponder.on("UniswapV2Pair:Swap", async ({ event, context }) => {
     }),
   ]);
 
-  // V2-specific updates
+  // Create userActivity record for the swap
+  try {
+    // const tokenSymbol = await getTokenSymbol(baseToken, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(chain.id),
+      type: type === "buy" ? "buy" : "sell",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: swapValueUsd,
+      amountIn: amount0In > 0 ? amount0In : amount1In,
+      amountOut: amount0Out > 0 ? amount0Out : amount1Out,
+      tokenAddress: baseToken,
+      tokenSymbol: token.symbol,
+      tokenAmount: v2isToken0 ? (amount0In > 0 ? amount0In : amount0Out) : (amount1In > 0 ? amount1In : amount1Out),
+      poolAddress: address,
+      assetAddress: baseToken,
+      metadata: {
+        poolType: "v2",
+        reserves0: reserve0.toString(),
+        reserves1: reserve1.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        quoteDelta: quoteDelta.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V2 swap ${event.transaction.hash}:`, error);
+    // Don't throw - allow the swap processing to continue
+  }
 });
 
 /* =================== INFO =================== */
@@ -314,4 +350,38 @@ ponder.on("UniswapV2PairUnichain:Swap", async ({ event, context }) => {
     context,
     update: { price: (price * ethPrice) / CHAINLINK_ETH_DECIMALS },
   });
+
+  // Create userActivity record for the swap
+  try {
+    const tokenSymbol = await getTokenSymbol(baseToken, context);
+
+    await insertUserActivity({
+      userId: event.transaction.from,
+      chainId: BigInt(chain.id),
+      type: type === "buy" ? "buy" : "sell",
+      timestamp,
+      txHash: event.transaction.hash,
+      logIndex: event.log.logIndex !== undefined ? BigInt(event.log.logIndex) : 0n,
+      usdValue: swapValueUsd,
+      amountIn,
+      amountOut,
+      tokenAddress: baseToken,
+      tokenSymbol,
+      tokenAmount: isToken0 ? (amount0In > 0 ? amount0In : amount0Out) : (amount1In > 0 ? amount1In : amount1Out),
+      poolAddress: address,
+      assetAddress: baseToken,
+      metadata: {
+        poolType: "v2-unichain",
+        reserves0: reserve0.toString(),
+        reserves1: reserve1.toString(),
+        price: price.toString(),
+        ethPrice: ethPrice.toString(),
+        quoteDelta: quoteDelta.toString(),
+      },
+      context,
+    });
+  } catch (error) {
+    console.error(`Failed to create userActivity for V2 Unichain swap ${event.transaction.hash}:`, error);
+    // Don't throw - allow the swap processing to continue
+  }
 });
