@@ -387,6 +387,10 @@ export const poolRelations = relations(pool, ({ one, many }) => ({
   hourBuckets: many(hourBucket),
   hourBucketUsds: many(hourBucketUsd),
   swaps: many(swap),
+  v4Config: one(v4PoolConfig, {
+    fields: [pool.address],
+    references: [v4PoolConfig.hookAddress],
+  }),
 }));
 
 export const v2PoolRelations = relations(v2Pool, ({ one }) => ({
@@ -435,6 +439,14 @@ export const hourBucketRelations = relations(hourBucket, ({ one }) => ({
 export const hourBucketUsdRelations = relations(hourBucketUsd, ({ one }) => ({
   pool: one(pool, {
     fields: [hourBucketUsd.pool],
+    references: [pool.address],
+  }),
+}));
+
+// v4PoolConfig has one related pool
+export const v4PoolConfigRelations = relations(v4PoolConfig, ({ one }) => ({
+  pool: one(pool, {
+    fields: [v4PoolConfig.hookAddress],
     references: [pool.address],
   }),
 }));
