@@ -29,42 +29,49 @@ ponder.on("Airlock:Migrate", async ({ event, context }) => {
 
   const numeraire = assetEntity.numeraire;
 
-  const pair = await context.client.readContract({
-    abi: UniswapV2FactoryABI,
-    address: factoryAddress,
-    functionName: "getPair",
-    args: [assetId, numeraire],
-  });
 
-  // Check if this is a V4 migration (pool address is 0x0)
-  if (pair != "0x0000000000000000000000000000000000000000") {
-    // V2 Migration (existing logic)
-    const v2Pool = await insertV2PoolIfNotExists({
-      assetAddress: assetId,
-      timestamp,
-      context,
+  try {
+    const pair = await context.client.readContract({
+      abi: UniswapV2FactoryABI,
+      address: factoryAddress,
+      functionName: "getPair",
+      args: [assetId, numeraire],
     });
 
-    await Promise.all([
-      updateAsset({
+    // Check if this is a V4 migration (pool address is 0x0)
+    if (pair != "0x0000000000000000000000000000000000000000") {
+      // V2 Migration (existing logic)
+      const v2Pool = await insertV2PoolIfNotExists({
         assetAddress: assetId,
+        timestamp,
         context,
-        update: {
-          migratedAt: timestamp,
-          migrated: true,
-        },
-      }),
-      updatePool({
-        poolAddress: v2Pool.parentPool,
-        context,
-        update: {
-          migratedAt: timestamp,
-          migrated: true,
-          migratedToPool: poolAddress, // The V2 pool address
-        },
-      }),
-    ]);
+      });
+
+      await Promise.all([
+        updateAsset({
+          assetAddress: assetId,
+          context,
+          update: {
+            migratedAt: timestamp,
+            migrated: true,
+          },
+        }),
+        updatePool({
+          poolAddress: v2Pool.parentPool,
+          context,
+          update: {
+            migratedAt: timestamp,
+            migrated: true,
+            migratedToPool: poolAddress, // The V2 pool address
+          },
+        }),
+      ]);
+    }
+  } catch (error) {
+    console.log('failed to get pair')
+    console.error(error)
   }
+
   // V4 Migration
   // const { chain } = context;
   // if (!chain) {

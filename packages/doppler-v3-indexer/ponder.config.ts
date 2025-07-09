@@ -10,10 +10,10 @@ import {
   PoolManagerABI,
   UniswapV2PairABI,
 } from "./src/abis";
-import { UniswapV2FactoryABI } from "@app/abis/UniswapV2Factory";
-import { BLOCK_INTERVALS } from "@app/config/blocks/intervals";
+import { UniswapV2FactoryABI } from "./src/abis/UniswapV2Factory";
+import { BLOCK_INTERVALS } from "./src/config/blocks/intervals";
 import { chainConfigs, CHAIN_IDS, V4_START_BLOCKS, LOCKABLE_V3_INITIALIZER_START_BLOCKS, SELF_CORRECTING_V4_INITIALIZER_START_BLOCKS } from "./src/config/chains";
-import { LockableUniswapV3InitializerABI } from "@app/abis/v3-abis/LockableUniswapV3InitializerABI";
+import { LockableUniswapV3InitializerABI } from "./src/abis/v3-abis/LockableUniswapV3InitializerABI";
 
 const { unichain, mainnet, baseSepolia, ink, base } = chainConfigs;
 
@@ -21,7 +21,7 @@ const { unichain, mainnet, baseSepolia, ink, base } = chainConfigs;
 export default createConfig({
   database: {
     kind: "postgres",
-    connectionString: "postgresql://postgres:postgres@localhost:5432/default",
+    connectionString: process.env.DATABASE_URL,
     poolConfig: {
       max: 100,
     },
