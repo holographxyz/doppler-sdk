@@ -46,6 +46,13 @@ export async function insertUserActivity({
   const id = `${chainId}-${txHash}-${logIndex}`;
 
   try {
+    // Check if record already exists
+    const existingActivity = await db.find(userActivity, { id });
+    if (existingActivity) {
+      console.warn(`UserActivity already exists for ID ${id}, skipping insert`);
+      return existingActivity;
+    }
+
     const userActivityRecord = await db.insert(userActivity).values({
       id,
       userId: userId.toLowerCase(),
