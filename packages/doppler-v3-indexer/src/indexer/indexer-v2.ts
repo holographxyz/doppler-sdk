@@ -33,7 +33,12 @@ ponder.on("UniswapV2Pair:Swap", async ({ event, context }) => {
 
   const v2PoolData = await db.find(v2Pool, { address });
 
-  const parentPool = v2PoolData!.parentPool.toLowerCase() as `0x${string}`;
+  if (!v2PoolData) {
+    console.error(`V2 pool not found for address ${address}. This swap event may have arrived before the pool was created via Airlock:Migrate.`);
+    return;
+  }
+
+  const parentPool = v2PoolData.parentPool.toLowerCase() as `0x${string}`;
 
   const [reserves, ethPrice] = await Promise.all([
     getPairData({ address, context }),
